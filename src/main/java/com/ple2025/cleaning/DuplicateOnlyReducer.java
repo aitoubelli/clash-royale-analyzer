@@ -55,7 +55,7 @@ public class DuplicateOnlyReducer extends Reducer<Text, Text, Text, org.apache.h
         // We want to output only those lines that are duplicates
         // A line is a duplicate if:
         // 1. It is an exact match of a previous line in this group
-        // 2. It represents the "same game" (within 60s) but is not the FIRST occurrence of that game
+        // 2. It represents the "same game" (within 5s) but is not the FIRST occurrence of that game
 
         if (!timedLines.isEmpty()) {
             TimedLine currentFirstOfGame = timedLines.get(0);
@@ -66,7 +66,7 @@ public class DuplicateOnlyReducer extends Reducer<Text, Text, Text, org.apache.h
                 TimedLine next = timedLines.get(i);
 
                 boolean isExactMatch = seenLinesInCurrentGame.contains(next.line);
-                boolean isSameGame = Math.abs(next.timestamp - currentFirstOfGame.timestamp) <= 60;
+                boolean isSameGame = Math.abs(next.timestamp - currentFirstOfGame.timestamp) <= 5;
 
                 if (isExactMatch) {
                     context.getCounter(CleanMapper.Validation.EXACT_DUPLICATE).increment(1);

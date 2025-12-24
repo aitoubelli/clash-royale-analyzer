@@ -55,7 +55,7 @@ public class DedupReducer extends Reducer<Text, Text, Text, org.apache.hadoop.io
 
         // Deduplication logic:
         // 1. Exact matches: same line
-        // 2. Same game duplicates: within 60 seconds
+        // 2. Same game duplicates: within 5 seconds
 
         List<TimedLine> uniqueGames = new ArrayList<>();
         if (!timedLines.isEmpty()) {
@@ -74,8 +74,8 @@ public class DedupReducer extends Reducer<Text, Text, Text, org.apache.hadoop.io
                     continue;
                 }
 
-                // If it's within 60 seconds of the current game's first record, it's a "same game" duplicate
-                if (Math.abs(next.timestamp - current.timestamp) <= 60) {
+                // If it's within 5 seconds of the current game's first record, it's a "same game" duplicate
+                if (Math.abs(next.timestamp - current.timestamp) <= 5) {
                     context.getCounter(CleanMapper.Validation.SAME_GAME_DUPLICATE).increment(1);
                     seenLinesInCurrentGame.add(next.line); // Still mark the line as seen for exact match check
                 } else {
