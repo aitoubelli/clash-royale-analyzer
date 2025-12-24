@@ -30,7 +30,9 @@ public class CleanMapper extends Mapper<LongWritable, Text, Text, Text> {
         INVALID_DECK,
         INVALID_DATE,
         INVALID_UTAG,
-        OTHER
+        OTHER,
+        EXACT_DUPLICATE,
+        SAME_GAME_DUPLICATE
     }
 
     @Override
@@ -48,13 +50,11 @@ public class CleanMapper extends Mapper<LongWritable, Text, Text, Text> {
             game = GSON.fromJson(line, GameRecord.class);
         } catch (JsonSyntaxException e) {
             context.getCounter(Validation.INVALID_JSON).increment(1);
-            logError(context, "JSON", line);
             return;
         }
 
         if (game == null || game.getPlayers() == null || game.getPlayers().size() != 2) {
             context.getCounter(Validation.INVALID_PLAYERS).increment(1);
-            logError(context, "PLAYERS", line);
             return;
         }
 
@@ -64,7 +64,6 @@ public class CleanMapper extends Mapper<LongWritable, Text, Text, Text> {
 
         if (!isValidDeck(p1.getDeck()) || !isValidDeck(p2.getDeck())) {
             context.getCounter(Validation.INVALID_DECK).increment(1);
-            logError(context, "DECK", line);
             return;
         }
 
@@ -72,30 +71,35 @@ public class CleanMapper extends Mapper<LongWritable, Text, Text, Text> {
         String utag2 = p2.getUtag();
         if (utag1 == null || utag2 == null) {
             context.getCounter(Validation.INVALID_UTAG).increment(1);
-            logError(context, "UTAG", line);
             return;
         }
 
-        // Normalize player order
+        // Normalize player order based on UTAG to create a canonical game ID
         if (utag1.compareTo(utag2) > 0) {
             String tmp = utag1;
             utag1 = utag2;
             utag2 = tmp;
         }
 
-        long roundedTimestamp;
+        long t;
         try {
             Instant instant = Instant.from(ISO_FORMAT.parse(game.getDate()));
-            roundedTimestamp = (instant.getEpochSecond() / 5) * 5;
+            t = instant.getEpochSecond();
         } catch (DateTimeParseException e) {
             context.getCounter(Validation.INVALID_DATE).increment(1);
-            logError(context, "DATE", line);
             return;
         }
 
-        String dedupKey = utag1 + "|" + utag2 + "|" + roundedTimestamp + "|" + game.getRound();
+        long round = game.getRound();
+
+        // Key: Canonical players + Round
+        String gameKey = utag1 + "|" + utag2 + "|" + round;
+
+        // Value: Timestamp + separator + original line
+        String outputValue = t + "|" + line;
+
+        context.write(new Text(gameKey), new Text(outputValue));
         context.getCounter(Validation.VALID).increment(1);
-        context.write(new Text(dedupKey), new Text(line));
     }
 
     private static long errorCount = 0;
@@ -146,15 +150,8 @@ public class CleanMapper extends Mapper<LongWritable, Text, Text, Text> {
             utag2 = tmp;
         }
 
-        long roundedTimestamp;
-        try {
-            Instant instant = Instant.from(ISO_FORMAT.parse(game.getDate()));
-            roundedTimestamp = (instant.getEpochSecond() / 5) * 5;
-        } catch (DateTimeParseException e) {
-            return null;
-        }
-
-        return utag1 + "|" + utag2 + "|" + roundedTimestamp + "|" + game.getRound();
+        long round = game.getRound();
+        return utag1 + "|" + utag2 + "|" + round;
     }
 
     public static boolean isValidDeck(String deck) {
