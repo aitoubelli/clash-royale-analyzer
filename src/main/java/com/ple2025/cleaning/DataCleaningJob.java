@@ -25,6 +25,8 @@ public class DataCleaningJob {
 
         job.setJarByClass(DataCleaningJob.class);
         job.setMapperClass(CleanMapper.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(Text.class);
 
         if ("clean".equals(mode)) {
             job.setReducerClass(DedupReducer.class);
