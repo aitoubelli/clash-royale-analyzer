@@ -62,3 +62,14 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+
+# json files
+*.json.tmp
+*.json.backup
+*.json
+
+# text files
+*.txt.backup
+*.txt.tmp
+*.txt

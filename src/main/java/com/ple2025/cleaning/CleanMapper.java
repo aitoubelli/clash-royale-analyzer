@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 
 public class CleanMapper extends Mapper<LongWritable, Text, Text, Text> {
 
@@ -19,63 +18,52 @@ public class CleanMapper extends Mapper<LongWritable, Text, Text, Text> {
     private static final DateTimeFormatter ISO_FORMAT =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
 
-    @Override
-    protected void map(LongWritable key, Text value, Context context) {
-        String line = value.toString().trim();
-        if (line.isEmpty()) return;
+    // Static method for local testing
+    public static String buildDedupKey(String jsonLine) {
+        if (jsonLine == null || jsonLine.trim().isEmpty()) return null;
 
         GameRecord game;
         try {
-            game = GSON.fromJson(line, GameRecord.class);
+            game = GSON.fromJson(jsonLine.trim(), GameRecord.class);
         } catch (JsonSyntaxException e) {
-            return; // skip malformed JSON
+            return null;
         }
 
         if (game == null || game.getPlayers() == null || game.getPlayers().size() != 2) {
-            return;
+            return null;
         }
 
-        List<com.ple2025.model.Player> players = game.getPlayers();
-        com.ple2025.model.Player p1 = players.get(0);
-        com.ple2025.model.Player p2 = players.get(1);
+        var players = game.getPlayers();
+        var p1 = players.get(0);
+        var p2 = players.get(1);
 
-        // Validate decks: must be non-null, 16 hex chars = 8 cards
         if (!isValidDeck(p1.getDeck()) || !isValidDeck(p2.getDeck())) {
-            return;
+            return null;
         }
 
         String utag1 = p1.getUtag();
         String utag2 = p2.getUtag();
-        if (utag1 == null || utag2 == null) return;
+        if (utag1 == null || utag2 == null) return null;
 
-        // Normalize player order (lexicographic)
         if (utag1.compareTo(utag2) > 0) {
             String tmp = utag1;
             utag1 = utag2;
             utag2 = tmp;
         }
 
-        // Parse and round timestamp to nearest 5 seconds
         long roundedTimestamp;
         try {
             Instant instant = Instant.from(ISO_FORMAT.parse(game.getDate()));
-            long epochSec = instant.getEpochSecond();
-            roundedTimestamp = (epochSec / 5) * 5; // floor to 5s
+            roundedTimestamp = (instant.getEpochSecond() / 5) * 5;
         } catch (DateTimeParseException e) {
-            return; // invalid date format
+            return null;
         }
 
-        // Build deduplication key: player1|player2|rounded_time|round
-        String dedupKey = utag1 + "|" + utag2 + "|" + roundedTimestamp + "|" + game.getRound();
-
-        try {
-            context.write(new Text(dedupKey), new Text(line));
-        } catch (Exception e) {
-            // skip on write error
-        }
+        return utag1 + "|" + utag2 + "|" + roundedTimestamp + "|" + game.getRound();
     }
 
-    private boolean isValidDeck(String deck) {
+    // Public static deck validator
+    public static boolean isValidDeck(String deck) {
         if (deck == null || deck.length() != 16) return false;
         for (int i = 0; i < 16; i++) {
             char c = deck.charAt(i);
@@ -84,5 +72,17 @@ public class CleanMapper extends Mapper<LongWritable, Text, Text, Text> {
             }
         }
         return true;
+    }
+
+    // Original Hadoop map method (reuses static logic)
+    @Override
+    protected void map(LongWritable key, Text value, Context context) {
+        String line = value.toString();
+        String dedupKey = buildDedupKey(line);
+        if (dedupKey != null) {
+            try {
+                context.write(new Text(dedupKey), new Text(line));
+            } catch (Exception ignored) {}
+        }
     }
 }
