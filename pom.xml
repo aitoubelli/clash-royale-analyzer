@@ -25,7 +25,8 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.ple2025.cleaning.DataCleaningJob</mainClass>
+                        <addDefaultImplementationEntries>false</addDefaultImplementationEntries>
+                        <addDefaultSpecificationEntries>false</addDefaultSpecificationEntries>
                         </manifest>
                     </archive>
                 </configuration>
