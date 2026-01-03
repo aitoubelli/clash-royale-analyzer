@@ -3,6 +3,7 @@ package com.ple2025.model;
 public class Player {
     private String utag;
     private String deck;
+    private boolean won;
 
     public String getUtag() {
         return utag;
@@ -12,5 +13,10 @@ public class Player {
         return deck;
     }
 
-    public Player() {}
+    public boolean isWon() {
+        return won;
+    }
+
+    public Player() {
+    }
 }

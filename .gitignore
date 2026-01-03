@@ -73,3 +73,11 @@ Thumbs.db
 *.txt.backup
 *.txt.tmp
 *.txt
+
+
+#output files/directories
+out/
+output/
+
+
+.vscode/
