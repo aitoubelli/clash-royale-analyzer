@@ -1,6 +1,7 @@
 package com.ple2025;
 
 import com.ple2025.cleaning.DataCleaningJob;
+import com.ple2025.edges.EdgeJob;
 import com.ple2025.nodes.Pass1Job;
 import com.ple2025.nodes.Pass2Job;
 import com.ple2025.utils.WhitelistBuilder;
@@ -21,11 +22,14 @@ public class MainApp {
                 case "clean":
                     DataCleaningJob.main(subArgs);
                     break;
-                case "pass1":
+                case "archetypes":
                     Pass1Job.main(subArgs);
                     break;
-                case "pass2":
+                case "nodes":
                     Pass2Job.main(subArgs);
+                    break;
+                case "edges":
+                    EdgeJob.main(subArgs);
                     break;
                 case "whitelist":
                     WhitelistBuilder.main(subArgs);
@@ -43,8 +47,9 @@ public class MainApp {
         System.out.println("Usage: MainApp <command> [args...]");
         System.out.println("Commands:");
         System.out.println("  clean <input> <output> <mode>    - Run data cleaning. Mode: 'clean' or 'duplicates'");
-        System.out.println("  pass1 <input> <output>           - Run Pass 1: Archetype Frequencies");
-        System.out.println("  pass2 <input> <whitelist> <output> - Run Pass 2: Filtered Nodes");
+        System.out.println("  archetypes <input> <output>      - Generate archetype frequencies");
+        System.out.println("  nodes <input> <whitelist> <output> - Generate filtered nodes");
+        System.out.println("  edges <input> <whitelist> <output> - Generate edges between archetypes");
         System.out.println("  whitelist <input> <output> <threshold> - Generate whitelist");
         System.out.println("  --help                           - Show this help");
     }

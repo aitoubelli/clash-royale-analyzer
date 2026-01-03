@@ -17,10 +17,9 @@ public class Pass2Reducer extends Reducer<Text, Text, Text, Text> {
                 wins += Long.parseLong(parts[1]);
             }
         }
-        // Optional: re-apply min-support (redundant if whitelist is correct, but safe)
+        // Only output full decks (k=8) for statistical validity in Part III
         int deckSize = key.getLength() / 2;
-        long minSupport = (deckSize == 8) ? 1 : 1;
-        if (count >= minSupport) {
+        if (deckSize == 8 && count >= 1) {
             context.write(new Text(key + ";" + count + ";" + wins), new Text(""));
         }
     }
