@@ -4,6 +4,8 @@ import com.ple2025.cleaning.DataCleaningJob;
 import com.ple2025.edges.EdgeJob;
 import com.ple2025.nodes.Pass1Job;
 import com.ple2025.nodes.Pass2Job;
+import com.ple2025.stats.CountAllJob;
+import com.ple2025.stats.StatJob;
 import com.ple2025.utils.WhitelistBuilder;
 
 public class MainApp {
@@ -34,6 +36,12 @@ public class MainApp {
                 case "whitelist":
                     WhitelistBuilder.main(subArgs);
                     break;
+                case "countall":
+                    CountAllJob.main(subArgs);
+                    break;
+                case "stats":
+                    StatJob.main(subArgs);
+                    break;
                 default:
                     System.err.println("Unknown command: " + command);
                     printHelp();
@@ -51,6 +59,8 @@ public class MainApp {
         System.out.println("  nodes <input> <whitelist> <output> - Generate filtered nodes");
         System.out.println("  edges <input> <whitelist> <output> - Generate edges between archetypes");
         System.out.println("  whitelist <input> <output> <threshold> - Generate whitelist");
+        System.out.println("  countall <edges_input> <output> - Compute total matches N_all");
+        System.out.println("  stats <edges_input> <nodes_input> <N_all> <output> - Generate statistical validation output");
         System.out.println("  --help                           - Show this help");
     }
 }
