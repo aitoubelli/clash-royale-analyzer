@@ -1,15 +1,14 @@
 package com.ple2025.stats;
 
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,9 +22,9 @@ public class StatMapper extends Mapper<LongWritable, Text, Text, Text> {
         N_all = context.getConfiguration().getLong("N_ALL", 1);
 
         // Load nodes from DistributedCache
-        URI[] cacheFiles = context.getCacheFiles();
-        if (cacheFiles != null && cacheFiles.length > 0) {
-            try (BufferedReader reader = Files.newBufferedReader(Paths.get(cacheFiles[0].toString()))) {
+        Path[] localCacheFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
+        if (localCacheFiles != null && localCacheFiles.length > 0) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(localCacheFiles[0].toString()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     String[] parts = line.split(";");
